@@ -1,76 +1,46 @@
 import logging
 from aiogram import Bot, Dispatcher, executor
-from aiogram.dispatcher.filters import Text
 from aiogram import types
+from aiogram.types.message import ContentType
+import markups as nav
 
 bot = Bot(token="5297937415:AAHQwWuf2AePeLVbREsBPV07xGknYVdSyv8")
+YOOTOKEN = "381764678:TEST:38452"
 
 dp = Dispatcher(bot)
 
 logging.basicConfig(level=logging.INFO)
 
-@dp.message_handler(commands="test1")
-async def cmd_test1(message: types.Message):
-    await message.reply("Test 1")
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+       await bot.send_message(message.from_user.id,'Привет👋, это бот по продаже домашек уже не помню какой школы,но они будут от великого Казара Мазарова. '
+                                                   'Бот ещё в разработке, но в нашем телеграмм канале kazarchikpy будет доступна вся информация. Пока доступна только тестовая покупка подписки', reply_markup = nav.sub_inline_markup)
 
-async def cmd_test2(message: types.Message):
-    await message.reply("Test 2")
+@dp.message_handler()
+async def bot_message(message: types.Message):
+    if message.text == 'Покупка подписки💸':
+       await bot.send_message(message.from_user.id, 'описание возможностей подписки', reply_markup = nav.sub_inline_markup)
 
-dp.register_message_handler(cmd_test2, commands="test2")
+@dp.callback_query_handler(text="submonth")
+async def submonth(call: types.CallbackQuery):
+        await bot.send_invoice(chat_id= call.from_user.id,
+                               title="Оформление подписки на Kazarchikpy",
+                               description="Тест описание",
+                               payload="month_sub",
+                               provider_token=YOOTOKEN,
+                               currency="RUB",
+                               start_parameter="get_access",
+                               prices=[{"label":"Руб", "amount": 40000}])
 
+@dp.pre_checkout_query_handler()
+async def process_pre_checout_query(pre_checout_query: types.PreCheckoutQuery):
+        await bot.answer_pre_checkout_query(pre_checout_query.id, ok=True)
 
-@dp.message_handler(text=("Start"))
-async def cmd_start(message: types.Message):
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Математика📕", "Информатика🖥", "Русский🪶", "География🌍", "Химия👩‍🔬", "Биология🌱", "Обществознание🧑‍️", "Планы разработчика🧑🏼‍💻", "Результат разработчика👨🏼‍💻", "Pay💸" ]
-    keyboard.add(*buttons)
-    await message.answer("Привет! Это твои предметы которые будут вскоре сделаны как виджет, но пока вот так.", reply_markup=keyboard)
+@dp.message_handler(content_types= ContentType.SUCCESSFUL_PAYMENT)
+async def procces_pay(message:types.Message):
+    if message.successful_payment.invoice_payload == "month_sub":
 
-@dp.message_handler(Text(equals="Математика📕"))
-async def with_puree(message: types.Message):
-    await message.reply("Твоя математика!")
-
-@dp.message_handler(lambda message: message.text == "Информатика🖥")
-async def without_puree(message: types.Message):
-    await message.reply("Вот твоя дз!")
-
-@dp.message_handler(Text(equals="Русский🪶"))
-async def with_puree(message: types.Message):
-    await message.reply("Do you speak russia?")
-
-@dp.message_handler(lambda message: message.text == "География🌍")
-async def without_puree(message: types.Message):
-    await message.reply("Ты помнишь, где экватор?🤨")
-
-@dp.message_handler(Text(equals="Химия👩‍🔬"))
-async def with_puree(message: types.Message):
-    await message.reply("Твоя химия!")
-
-@dp.message_handler(lambda message: message.text == "Биология🌱")
-async def without_puree(message: types.Message):
-    await message.reply("Биолигия👉👈")
-
-@dp.message_handler(Text(equals="Планы разработчика🧑🏼‍💻"))
-async def with_puree(message: types.Message):
-    await message.reply("1. Решение проблемы с отправкой фоток. " 
-                        "2. Придумать как подключить оплату дани великому Казару Мазарову и чтоб вам были доступны его услуги." 
-                        "3. Бот оператор 4.Подключение к серверу 5. Получить зп. "
-                        "6. Создание блэкджека со шлюхами (Шлюх может и не будет, но блэкджек наверняка")
-
-@dp.message_handler(lambda message: message.text == "Результат разработчика👨🏼‍💻")
-async def without_puree(message: types.Message):
-    await message.reply("За выходные был cоздан и проходящий тесты первый inline (доступен по команде /inline)."
-                        " Была добавлена кнопка результатов для посетителей.Также скоро ожидается масшатбное обновление с измением меню и добавлением подписки с тестом Юkassa. "
-                        "Теперь на аватарке весит флаг империи и по команде /slogan будет доступен слоган компании")
-
-@dp.message_handler(Text(equals="Pay💸"))
-async def with_puree(message: types.Message):
-    await message.reply('<a href="https://yookassa.ru/developers/payment-acceptance/getting-started/payment-methods">Реквизиты оплаты</a>',parse_mode="HTML")
-
-@dp.message_handler(lambda message: message.text == "Обществознание🧑‍️")
-async def without_puree(message: types.Message):
-    await message.reply("Ты станешь моим адвокатом?")
+        await bot.send_message(message.from_user.id, "Вам была выдана подписка на месяц")
 
 if __name__ == "__main__":
-
     executor.start_polling(dp, skip_updates=True)
