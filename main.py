@@ -1,5 +1,7 @@
 import logging
 import sqlite3
+import time
+import datetime
 from aiogram import Bot, Dispatcher, executor
 from aiogram import types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -32,8 +34,41 @@ class dialog(StatesGroup):
     spam = State()
     blacklist = State()
     whitelist = State()
+#------------------------------------------------------------Data_base----------------------------------------------------------------
+def set_time_sub(self, user_id, time_sub):
+    with self.connection:
+        return self.cursor.execute("UPDATE 'users' SET 'time_sub' = ? WHERE 'user ID' = ?", (time_sub, user_id))
+
+def get_time_sub(self, user_id):
+    with self.connection:
+        result = self.cursor.execute("SELECT 'time_sub' FROM 'users' WHERE 'user_id' = ?", (user_id,)).fetchall()
+        for row in result:
+            time_sub = int(row[0])
+        return time_sub
+
+    def get_time_status(self, user_id):
+        with self.connection:
+            result = self.cursor.execute("SELECT 'time_sub' FROM 'users' WHERE 'user_id' = ?", (user_id,)).fetchall()
+            for row in result:
+                time_sub = int(row[0])
+
+            if time_sub > int(time.time()):
+                return True
+            else:
+                return False
 
 #-------------------------------------------------------------------------------------------------------------------------------
+def days_to_seconds(days):
+    return days * 24 * 60 * 60
+
+def time_sub_day(get_time):
+    time_now = int(time.time())
+    middle_time = int(get_time) - time_now
+    if  middle_time <= 0
+        return False
+    else:
+        dt = str(datetime.timedelta(seconds=middle_time))
+        return dt
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
@@ -63,6 +98,8 @@ async def process_pre_checout_query(pre_checout_query: types.PreCheckoutQuery):
 @dp.message_handler(content_types= ContentType.SUCCESSFUL_PAYMENT)
 async def procces_pay(message:types.Message):
     if message.successful_payment.invoice_payload == "month_sub":
+        time_sub = int(time.time()) + days_to_seconds(30)
+        db.db.set_time_sub(message.from_user_id, time_sub)
         await bot.send_message(message.from_user.id, "Вам была выдана подписка")
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(types.InlineKeyboardButton(text="Математика📕"))
@@ -212,7 +249,11 @@ async def hfandler(message: types.Message, state: FSMContext):
                 reply_markup=keyboard)
             await dialog.whitelist.set()
 
+# if db.get_sub_status(message.from_user_id):
+#    await bot.send_message(message.from_user.id, "Предметы")
+#  else await bot.send_message("Купите подписку")
 
+#---------------------------------------------------------------------------------------------------------------------------------------
 @dp.message_handler(state=dialog.whitelist)
 async def proc(message: types.Message, state: FSMContext):
     if message.text == 'Отмена':
