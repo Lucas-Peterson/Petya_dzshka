@@ -29,7 +29,6 @@ cur.execute("""CREATE TABLE IF NOT EXISTS users(
 """)
 conn.commit()
 
-
 class dialog(StatesGroup):
     spam = State()
     blacklist = State()
@@ -64,7 +63,7 @@ def days_to_seconds(days):
 def time_sub_day(get_time):
     time_now = int(time.time())
     middle_time = int(get_time) - time_now
-    if  middle_time <= 0
+    if  middle_time <= 0:
         return False
     else:
         dt = str(datetime.timedelta(seconds=middle_time))
