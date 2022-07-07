@@ -8,3 +8,6 @@ mainMenu.add(btnSub)
 sub_inline_markup = InlineKeyboardMarkup(row_width=1)
 btnSubMonth = InlineKeyboardButton(text="Месяц - 400 рублей", callback_data="submonth")
 sub_inline_markup.insert(btnSubMonth)
+#----------Основа------------------
+
+
