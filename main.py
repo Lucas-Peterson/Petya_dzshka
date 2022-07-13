@@ -56,22 +56,28 @@ def get_time_sub(self, user_id):
             else:
                 return False
 
-#-------------------------------------------------------------------------------------------------------------------------------
-def days_to_seconds(days):
-    return days * 24 * 60 * 60
-
-def time_sub_day(get_time):
-    time_now = int(time.time())
-    middle_time = int(get_time) - time_now
-    if  middle_time <= 0:
-        return False
-    else:
-        dt = str(datetime.timedelta(seconds=middle_time))
-        return dt
-
+#---------------------------------------------------------------StartMeny--------------------------------------------------------------------------------------------
 @dp.message_handler(commands=['start'])
-async def start(message: types.Message):
-       await bot.send_message(message.from_user.id,'Привет👋, это бот по продаже домашек уже не помню какой школы,но они будут от великого Казара Мазарова. '
+async def admn(message: Message):
+    cur = conn.cursor()
+    cur.execute(f"SELECT block FROM users WHERE user_id = {message.chat.id}")
+    result = cur.fetchone()
+    if message.from_user.id == ADMIN:
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        keyboard.add(types.InlineKeyboardButton(text="Рассылка"))
+        keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
+        keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
+        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре', reply_markup=keyboard)
+    # ------------------------------------------------------Payment-----------------------------------------------------------
+    else:
+        if result is None:
+            cur = conn.cursor()
+            cur.execute(f'''SELECT * FROM users WHERE (user_id="{message.from_user.id}")''')
+            entry = cur.fetchone()
+            if entry is None:
+                cur.execute(f'''INSERT INTO users VALUES ('{message.from_user.id}', '0')''')
+            conn.commit()
+            await bot.send_message(message.from_user.id,'Привет👋, это бот по продаже домашек уже не помню какой школы,но они будут от великого Казара Мазарова. '
                                                    'Бот ещё в разработке, но в нашем телеграмм канале kazarchikpy будет доступна вся информация. Пока доступна только тестовая покупка подписки', reply_markup = nav.sub_inline_markup)
 
 @dp.message_handler()
@@ -100,39 +106,64 @@ async def procces_pay(message:types.Message):
         time_sub = int(time.time()) + days_to_seconds(30)
         db.db.set_time_sub(message.from_user_id, time_sub)
         await bot.send_message(message.from_user.id, "Вам была выдана подписка")
+
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
         keyboard.add(types.InlineKeyboardButton(text="Математика📕"))
-        keyboard.add(types.InlineKeyboardButton(text="Информатика👨🏼‍💻🧑🏼‍💻"))
+        keyboard.add(types.InlineKeyboardButton(text="Информатика👨🏼‍💻"))
         keyboard.add(types.InlineKeyboardButton(text="Русский🪶"))
         keyboard.add(types.InlineKeyboardButton(text="Физика📚"))
-        keyboard.add(types.InlineKeyboardButton(text="Право🧑⚖️"))
-        keyboard.add(types.InlineKeyboardButton(text="Биология🍀"))
+        keyboard.add(types.InlineKeyboardButton(text="Дальше"))
         await message.answer('Добро пожаловать в ваше главное меню!', reply_markup=keyboard)
 
-#---------------------------------------------------------------ADMIN--------------------------------------------------------------------------------------------
-@dp.message_handler(commands=['admin'])
-async def admn(message: Message):
-    cur = conn.cursor()
-    cur.execute(f"SELECT block FROM users WHERE user_id = {message.chat.id}")
-    result = cur.fetchone()
-    if message.from_user.id == ADMIN:
-        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        keyboard.add(types.InlineKeyboardButton(text="Рассылка"))
-        keyboard.add(types.InlineKeyboardButton(text="Добавить в ЧС"))
-        keyboard.add(types.InlineKeyboardButton(text="Убрать из ЧС"))
-        await message.answer('Добро пожаловать в Админ-Панель! Выберите действие на клавиатуре', reply_markup=keyboard)
-    else:
-        if result is None:
-            cur = conn.cursor()
-            cur.execute(f'''SELECT * FROM users WHERE (user_id="{message.from_user.id}")''')
-            entry = cur.fetchone()
-            if entry is None:
-                cur.execute(f'''INSERT INTO users VALUES ('{message.from_user.id}', '0')''')
-            conn.commit()
-            await message.answer('Привет')
-        else:
-            await message.answer('Ты был заблокирован!')
+        @dp.message_handler(text="Математика📕")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
 
+        @dp.message_handler(text="Информатика👨🏼‍💻")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
+
+        @dp.message_handler(text="Русский🪶")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
+
+        @dp.message_handler(text="Физика📚")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
+
+        @dp.message_handler(text="Дальше")
+        async def bot_message(message: types.Message):
+
+            keyboard.add(types.InlineKeyboardButton(text="Право🧑‍⚖️"))
+            keyboard.add(types.InlineKeyboardButton(text="Биология🍀"))
+            keyboard.add(types.InlineKeyboardButton(text="Химия🌱"))
+
+        @dp.message_handler(text="Право🧑‍⚖️")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
+
+        @dp.message_handler(text="Биология🍀")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
+
+        @dp.message_handler(text="Химия🌱")
+        async def bot_message(message: types.Message):
+            await bot.send_message(message.from_user.id, 'text')
+
+        #----------------------------------------------Time_sub-----------------------------------------------------------------
+
+        def days_to_seconds(days):
+            return days * 24 * 60 * 60
+
+        def time_sub_day(get_time):
+            time_now = int(time.time())
+            middle_time = int(get_time) - time_now
+            if middle_time <= 0:
+                return False
+            else:
+                dt = str(datetime.timedelta(seconds=middle_time))
+                return dt
+#---------------------------------------------------Admin-------------------------------------------------------------------------------
 
 @dp.message_handler(content_types=['text'], text='Рассылка')
 async def spam(message: Message):
@@ -252,7 +283,6 @@ async def hfandler(message: types.Message, state: FSMContext):
 #    await bot.send_message(message.from_user.id, "Предметы")
 #  else await bot.send_message("Купите подписку")
 
-#---------------------------------------------------------------------------------------------------------------------------------------
 @dp.message_handler(state=dialog.whitelist)
 async def proc(message: types.Message, state: FSMContext):
     if message.text == 'Отмена':
